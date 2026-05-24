@@ -2,19 +2,29 @@ name: Harga Beras Daily
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # jam 07.00 WIB
+    - cron: '*/30 0-5 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   send-beras:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install requests beautifulsoup4 pytz
+      - run: pip install requests pytz
       - run: python beras.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+      - name: Save last sent
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add last_sent_beras.txt
+          git commit -m "update last sent beras" || echo "no changes"
+          git push
