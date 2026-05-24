@@ -1,0 +1,20 @@
+name: Harga Beras Daily
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # jam 07.00 WIB
+  workflow_dispatch:
+
+jobs:
+  send-beras:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install requests beautifulsoup4 pytz
+      - run: python beras.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
