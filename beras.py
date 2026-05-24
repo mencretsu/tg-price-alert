@@ -77,6 +77,10 @@ tgl_label = now.strftime("%-d %b %Y") if is_today else \
             f"data per {datetime.strptime(tgl_today, '%Y-%m-%d').strftime('%-d %b')}"
 
 msg = "\n".join(lines) + f"\n\n{tgl_label} \n· Data by: sp2kp.kemendag.go.id"
+msg = "\n".join(lines) + \
+      f"\n\n<i>data diambil berdasarkan harga nasional tertimbang (HNT) pasar tradisional</i>" \
+      f"\n{tgl_label} \n· Data by: sp2kp.kemendag.go.id"
+
 # print(msg)
 # print(f"TOKEN: {BOT_TOKEN[:10]}...")
 # print(f"CHANNEL: {CHANNEL_ID}")
