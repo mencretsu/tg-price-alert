@@ -1,59 +1,47 @@
 import requests
-from datetime import date, timedelta
-from datetime import datetime
+from datetime import date, timedelta, datetime
 import pytz
 import os
 
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_ID']
 
-# Variant ID beras nasional di SP2KP Kemendag
-# komoditas "Beras" (id=1), tipe Barang Kebutuhan Pokok
-BERAS_VARIANTS = {
-    27: "Beras Medium",
-    28: "Beras Premium",
+VARIANTS = {
+    "beras medium":   {"id": 27, "region": "A"},
+    "beras premium":  {"id": 28, "region": "A"},
+    "bulog sphp":     {"id": 29, "region": "A"},
 }
 
-BASE_URL = "https://api-sp2kp.kemendag.go.id"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": "https://sp2kp.kemendag.go.id/",
-}
+HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://sp2kp.kemendag.go.id/"}
 
-def get_harga_beras():
-    # Ambil window 14 hari buat jaga-jaga kalau hari ini belum ada data
+def get_harga(variant_id):
     today = date.today()
-    tanggal_end = today.strftime("%Y-%m-%d")
-    tanggal_start = (today - timedelta(days=14)).strftime("%Y-%m-%d")
+    r = requests.get(
+        "https://api-sp2kp.kemendag.go.id/report/api/hnt/history-series",
+        params={
+            "tanggal_start": (today - timedelta(days=14)).strftime("%Y-%m-%d"),
+            "tanggal_end": today.strftime("%Y-%m-%d"),
+            "variant_id": variant_id,
+        },
+        headers=HEADERS,
+        timeout=15,
+    )
+    data = r.json().get("data", [])
+    if len(data) < 2:
+        return None
+    latest = data[-1]
+    prev   = data[-2]
+    harga  = latest["harga"]
+    pct    = (harga - prev["harga"]) / prev["harga"] * 100
+    tgl    = latest["tanggal_data"]
+    return {"harga": harga, "pct": pct, "tanggal": tgl}
 
-    hasil = {}
-    for variant_id, nama in BERAS_VARIANTS.items():
-        try:
-            r = requests.get(
-                f"{BASE_URL}/report/api/hnt/history-series",
-                params={
-                    "tanggal_start": tanggal_start,
-                    "tanggal_end": tanggal_end,
-                    "variant_id": variant_id,
-                },
-                headers=HEADERS,
-                timeout=15,
-            )
-            r.raise_for_status()
-            data = r.json()
+def fmt_harga(n):
+    return f"Rp {n:,}".replace(",", ".")
 
-            rows = data.get("data", [])
-            if rows:
-                latest = rows[-1]
-                harga = latest.get("harga", 0)
-                tgl = latest.get("tanggal_data", "")
-                if harga and harga > 0:
-                    hasil[nama] = {"harga": harga, "tanggal": tgl}
-            print(f"  ✓ {nama}: {hasil.get(nama)}")
-        except Exception as e:
-            print(f"  ✗ {nama} (id={variant_id}): {e}")
-
-    return hasil if hasil else None
+def fmt_pct(p):
+    sign = "+" if p >= 0 else ""
+    return f"{sign}{p:.2f}%"
 
 def send_telegram(msg):
     requests.post(
@@ -61,35 +49,24 @@ def send_telegram(msg):
         json={"chat_id": CHANNEL_ID, "text": msg, "parse_mode": "HTML"},
     )
 
-wib = pytz.timezone("Asia/Jakarta")
-now = datetime.now(wib)
+wib  = pytz.timezone("Asia/Jakarta")
+now  = datetime.now(wib)
+today_str = now.strftime("%Y-%m-%d")
 
-print("Fetching harga beras dari SP2KP Kemendag...")
-harga = get_harga_beras()
+lines = []
+tgl_data = None
 
-if not harga:
-    send_telegram(
-        f"⚠️ <b>Harga kosong</b>\n\n"
-        f"Sumber SP2KP Kemendag tidak tersedia.\n"
-        f"📅 {now.strftime('%d %b %Y')} 🕐 {now.strftime('%H.%M')} WIB"
-    )
-else:
-    lines = []
-    tgl_data = ""
-    for nama, info in harga.items():
-        lines.append(f"• {nama}: <b>Rp {info['harga']:,}/kg</b>")
-        tgl_data = info["tanggal"]
+for nama, cfg in VARIANTS.items():
+    d = get_harga(cfg["id"])
+    if not d:
+        lines.append(f"{nama:<15} data tidak tersedia")
+        continue
+    tgl_data = d["tanggal"]
+    lines.append(f"{nama:<15} {fmt_harga(d['harga'])}  {fmt_pct(d['pct'])}")
 
-    # Info kalau data bukan hari ini (weekend/libur)
-    catatan = ""
-    if tgl_data and tgl_data != now.strftime("%Y-%m-%d"):
-        catatan = f"\n⚠️ <i>Data terakhir tersedia: {tgl_data}</i>"
+is_latest = tgl_data == today_str
+tgl_label = now.strftime("%-d %b %Y") if is_latest else \
+            f"data per {datetime.strptime(tgl_data, '%Y-%m-%d').strftime('%-d %b')}"
 
-    msg = (
-        f"🌾 <b>Harga Beras Hari Ini</b>\n\n"
-        + "\n".join(lines)
-        + catatan
-        + f"\n\n📅 {now.strftime('%d %b %Y')} 🕐 {now.strftime('%H.%M')} WIB\n"
-        f"📊 Sumber: Kemendag SP2KP"
-    )
-    send_telegram(msg)
+msg = "\n".join(lines) + f"\n\n{tgl_label} · <sp2kp.kemendag.go.id>"
+send_telegram(msg)
