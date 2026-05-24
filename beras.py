@@ -74,11 +74,11 @@ for nama, vid in VARIANTS.items():
 
 is_today = tgl_today == now.strftime("%Y-%m-%d")
 tgl_label = now.strftime("%-d %b %Y") if is_today else \
-            f"data per {datetime.strptime(tgl_today, '%Y-%m-%d').strftime('%-d %b')}"
+            f"Harga per {datetime.strptime(tgl_today, '%Y-%m-%d').strftime('%-d %b')}"
 
 msg = "\n".join(lines) + \
-      f"\n\n<i>ℹ️ data diambil berdasarkan harga nasional tertimbang (HNT) pasar tradisional</i>" \
-      f"\n\n{tgl_label} \nPrice by: sp2kp.kemendag.go.id"
+      f"\n\n<i>ℹ️ Data diambil berdasarkan harga nasional tertimbang (HNT) pasar tradisional</i>" \
+      f"\n\n{tgl_label}"
 
 # print(msg)
 # print(f"TOKEN: {BOT_TOKEN[:10]}...")
