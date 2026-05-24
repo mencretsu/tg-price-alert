@@ -24,8 +24,8 @@ jobs:
 
       - name: Run IHSG alert
         env:
-          TELEGRAM_BOT_TOKENihsg: ${{ secrets.TELEGRAM_BOT_TOKENihsg }}
-          TELEGRAM_CHANNEL_IDihsg: ${{ secrets.TELEGRAM_CHANNEL_IDihsg }}
+          TELEGRAM_BOT_TOKENIHSG: ${{ secrets.TELEGRAM_BOT_TOKENIHSG }}
+          TELEGRAM_CHANNEL_IDIHSG: ${{ secrets.TELEGRAM_CHANNEL_IDIHSG }}
         run: python ihsg_price.py
 
       - name: Save last price
