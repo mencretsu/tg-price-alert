@@ -26,7 +26,7 @@ def get_harga(variant_id):
         headers=HEADERS,
         timeout=15,
     )
-    data = r.json().get("data", [])
+    data = r.json().get("data") or []
     if len(data) < 2:
         return None
     latest = data[-1]
