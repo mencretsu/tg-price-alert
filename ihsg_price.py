@@ -3,8 +3,8 @@ from datetime import datetime
 import pytz
 import os
 
-BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKENihsg']
-CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_IDihsg']
+BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKENIHSG']
+CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_IDIHSG']
 LAST_PRICE_FILE = "last_price_ihsg.txt"
 THRESHOLD = 50
 
@@ -52,7 +52,7 @@ else:
         emoji = "🟢" if diff >= 0 else "🔴"
         sign = "+" if diff >= 0 else ""
         msg = (
-            f"{emoji} <b>IHSG Alert!</b>\n"
+            f"{emoji}\n"
             f"{last:,.2f} → {current:,.2f}\n"
             f"{sign}{pct:.2f}%\n\n"
             f"[{now.strftime('%-d %b %Y %H.%M')} WIB]"
