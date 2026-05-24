@@ -7,37 +7,42 @@ BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_ID']
 
 VARIANTS = {
-    "beras medium":   {"id": 27, "region": "A"},
-    "beras premium":  {"id": 28, "region": "A"},
-    "bulog sphp":     {"id": 29, "region": "A"},
+    "beras medium":  52,
+    "beras premium": 51,
 }
 
 HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://sp2kp.kemendag.go.id/"}
+BASE = "https://api-sp2kp.kemendag.go.id/report/api"
 
-def get_harga(variant_id):
+def get_harga(variant_id, tanggal):
+    r = requests.get(
+        f"{BASE}/average-price/hnt-disparity",
+        params={"variant_id": variant_id, "tanggal": tanggal},
+        headers=HEADERS, timeout=15,
+    )
+    data = r.json().get("data")
+    if not data:
+        return None
+    return data["hnt"]
+
+def get_last_two_dates():
     today = date.today()
     r = requests.get(
-        "https://api-sp2kp.kemendag.go.id/report/api/hnt/history-series",
+        f"{BASE}/hnt/history-series",
         params={
             "tanggal_start": (today - timedelta(days=14)).strftime("%Y-%m-%d"),
             "tanggal_end": today.strftime("%Y-%m-%d"),
-            "variant_id": variant_id,
+            "variant_id": 52,
         },
-        headers=HEADERS,
-        timeout=15,
+        headers=HEADERS, timeout=15,
     )
     data = r.json().get("data") or []
     if len(data) < 2:
-        return None
-    latest = data[-1]
-    prev   = data[-2]
-    harga  = latest["harga"]
-    pct    = (harga - prev["harga"]) / prev["harga"] * 100
-    tgl    = latest["tanggal_data"]
-    return {"harga": harga, "pct": pct, "tanggal": tgl}
+        return None, None
+    return data[-1]["tanggal_data"], data[-2]["tanggal_data"]
 
 def fmt_harga(n):
-    return f"Rp {n:,}".replace(",", ".")
+    return f"Rp {int(n):,}".replace(",", ".")
 
 def fmt_pct(p):
     sign = "+" if p >= 0 else ""
@@ -49,25 +54,28 @@ def send_telegram(msg):
         json={"chat_id": CHANNEL_ID, "text": msg, "parse_mode": "HTML"},
     )
 
-wib  = pytz.timezone("Asia/Jakarta")
-now  = datetime.now(wib)
-today_str = now.strftime("%Y-%m-%d")
+wib = pytz.timezone("Asia/Jakarta")
+now = datetime.now(wib)
+
+tgl_today, tgl_prev = get_last_two_dates()
+if not tgl_today:
+    send_telegram("⚠️ gagal ambil data")
+    exit()
 
 lines = []
-tgl_data = None
-
-for nama, cfg in VARIANTS.items():
-    d = get_harga(cfg["id"])
-    if not d:
+for nama, vid in VARIANTS.items():
+    h_today = get_harga(vid, tgl_today)
+    h_prev  = get_harga(vid, tgl_prev)
+    if not h_today or not h_prev:
         lines.append(f"{nama:<15} data tidak tersedia")
         continue
-    tgl_data = d["tanggal"]
-    lines.append(f"{nama:<15} {fmt_harga(d['harga'])}  {fmt_pct(d['pct'])}")
+    pct = (h_today - h_prev) / h_prev * 100
+    lines.append(f"{nama:<15} {fmt_harga(h_today)}  {fmt_pct(pct)}")
 
-is_latest = tgl_data == today_str
-tgl_label = now.strftime("%-d %b %Y") if is_latest else \
-            f"data per {datetime.strptime(tgl_data, '%Y-%m-%d').strftime('%-d %b')}"
+is_today = tgl_today == now.strftime("%Y-%m-%d")
+tgl_label = now.strftime("%-d %b %Y") if is_today else \
+            f"data per {datetime.strptime(tgl_today, '%Y-%m-%d').strftime('%-d %b')}"
 
-msg = "\n".join(lines) + f"\n\n{tgl_label} · <sp2kp.kemendag.go.id>"
+msg = "\n".join(lines) + f"\n\n{tgl_label} \n· Data by: <sp2kp.kemendag.go.id>"
 print(msg)
 send_telegram(msg)
