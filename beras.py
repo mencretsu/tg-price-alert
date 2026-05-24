@@ -69,4 +69,5 @@ tgl_label = now.strftime("%-d %b %Y") if is_latest else \
             f"data per {datetime.strptime(tgl_data, '%Y-%m-%d').strftime('%-d %b')}"
 
 msg = "\n".join(lines) + f"\n\n{tgl_label} · <sp2kp.kemendag.go.id>"
+print(msg)
 send_telegram(msg)
