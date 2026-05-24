@@ -78,4 +78,11 @@ tgl_label = now.strftime("%-d %b %Y") if is_today else \
 
 msg = "\n".join(lines) + f"\n\n{tgl_label} \n· Data by: <sp2kp.kemendag.go.id>"
 print(msg)
+print(f"TOKEN: {BOT_TOKEN[:10]}...")
+print(f"CHANNEL: {CHANNEL_ID}")
+r = requests.post(
+    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+    json={"chat_id": CHANNEL_ID, "text": msg, "parse_mode": "HTML"},
+)
+print(r.json())
 send_telegram(msg)
