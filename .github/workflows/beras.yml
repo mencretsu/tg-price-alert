@@ -2,7 +2,7 @@ name: Harga Beras Daily
 
 on:
   schedule:
-    - cron: '*/30 0-5 * * *'
+    - cron: '*/30 7-17 * * 1-5'
   workflow_dispatch:
 
 permissions:
