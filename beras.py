@@ -30,7 +30,10 @@ wib = pytz.timezone("Asia/Jakarta")
 now = datetime.now(wib)
 
 def get_last_two_dates():
-    today = datetime.now(wib).date()  # fix: pakai WIB
+    wib_tz = pytz.timezone("Asia/Jakarta")
+    today = datetime.now(wib_tz).date()
+    
+    # coba ambil range lebih lebar
     r = requests.get(
         f"{BASE}/hnt/history-series",
         params={
@@ -41,10 +44,20 @@ def get_last_two_dates():
         headers=HEADERS, timeout=15,
     )
     data = r.json().get("data") or []
-    
     if len(data) < 2:
         return None, None
-    return data[-1]["tanggal_data"][:10], data[-2]["tanggal_data"][:10]  # fix: slice [:10]
+    
+    tgl_today = data[-1]["tanggal_data"][:10]
+    tgl_prev  = data[-2]["tanggal_data"][:10]
+    
+    # kalau history-series masih kemarin, coba paksa cek hari ini langsung
+    today_str = today.strftime("%Y-%m-%d")
+    if tgl_today != today_str:
+        test = get_harga(52, today_str)
+        if test:
+            tgl_today, tgl_prev = today_str, tgl_today
+
+    return tgl_today, tgl_prev
     
 def get_harga(variant_id, tanggal):
     r = requests.get(
