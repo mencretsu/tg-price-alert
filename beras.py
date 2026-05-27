@@ -41,8 +41,7 @@ def get_last_two_dates():
         headers=HEADERS, timeout=15,
     )
     data = r.json().get("data") or []
-    print(f"tgl_today dari API : '{tgl_today}'")
-    print(f"now WIB            : '{now.strftime('%Y-%m-%d')}'")
+    
     if len(data) < 2:
         return None, None
     return data[-1]["tanggal_data"][:10], data[-2]["tanggal_data"][:10]  # fix: slice [:10]
@@ -79,6 +78,8 @@ if already_sent_today():
     exit()
 
 tgl_today, tgl_prev = get_last_two_dates()
+print(f"tgl_today dari API : '{tgl_today}'")
+print(f"now WIB            : '{now.strftime('%Y-%m-%d')}'")
 if not tgl_today:
     print("Gagal ambil data.")
     exit()
