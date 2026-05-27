@@ -97,10 +97,10 @@ if not tgl_today:
     print("Gagal ambil data.")
     exit()
 
-# Kalau data belum update hari ini, skip dulu — nanti run berikutnya coba lagi
-if tgl_today != now.strftime("%Y-%m-%d"):
-    print(f"Data masih per {tgl_today}, belum update. Skip.")
-    exit()
+# # Kalau data belum update hari ini, skip dulu — nanti run berikutnya coba lagi
+# if tgl_today != now.strftime("%Y-%m-%d"):
+#     print(f"Data masih per {tgl_today}, belum update. Skip.")
+#     exit()
 
 lines = []
 for nama, vid in VARIANTS.items():
