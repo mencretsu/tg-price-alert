@@ -26,8 +26,11 @@ def mark_sent():
     with open(LAST_SENT_FILE, "w") as f:
         f.write(date.today().strftime("%Y-%m-%d"))
 
+wib = pytz.timezone("Asia/Jakarta")
+now = datetime.now(wib)
+
 def get_last_two_dates():
-    today = date.today()
+    today = datetime.now(wib).date()  # fix: pakai WIB
     r = requests.get(
         f"{BASE}/hnt/history-series",
         params={
@@ -40,8 +43,9 @@ def get_last_two_dates():
     data = r.json().get("data") or []
     if len(data) < 2:
         return None, None
-    return data[-1]["tanggal_data"], data[-2]["tanggal_data"]
-
+    return data[-1]["tanggal_data"][:10], data[-2]["tanggal_data"][:10]  # fix: slice [:10]
+print(f"tgl_today dari API : '{tgl_today}'")
+print(f"now WIB            : '{now.strftime('%Y-%m-%d')}'")
 def get_harga(variant_id, tanggal):
     r = requests.get(
         f"{BASE}/average-price/hnt-disparity",
