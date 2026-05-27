@@ -44,8 +44,8 @@ def get_last_two_dates():
     if len(data) < 2:
         return None, None
     return data[-1]["tanggal_data"][:10], data[-2]["tanggal_data"][:10]  # fix: slice [:10]
-print(f"tgl_today dari API : '{tgl_today}'")
-print(f"now WIB            : '{now.strftime('%Y-%m-%d')}'")
+    print(f"tgl_today dari API : '{tgl_today}'")
+    print(f"now WIB            : '{now.strftime('%Y-%m-%d')}'")
 def get_harga(variant_id, tanggal):
     r = requests.get(
         f"{BASE}/average-price/hnt-disparity",
