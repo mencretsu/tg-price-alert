@@ -6,7 +6,7 @@ import os
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKENIHSG']
 CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_IDIHSG']
 LAST_PRICE_FILE = "last_price_ihsg.txt"
-THRESHOLD = 50
+THRESHOLD = 10
 
 def get_ihsg():
     r = requests.get(
@@ -52,10 +52,9 @@ else:
         emoji = "🟢" if diff >= 0 else "🔴"
         sign = "+" if diff >= 0 else ""
         msg = (
-            f"{emoji}\n"
-            f"{last:,.2f} → {current:,.2f}\n"
-            f"{sign}{pct:.2f}%\n\n"
-            f"[{now.strftime('%-d %b %Y %H.%M')} WIB]"
+            f"{emoji} [ {sign}{pct:.2f}% ]\n"
+            f"{last:,.2f} → {current:,.2f}\n\n"
+            f"<i>{now.strftime('%-d %b %Y %H.%M')} WIB</i>"
         )
         print(msg)
         send_telegram(msg)
