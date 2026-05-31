@@ -6,7 +6,7 @@ import os
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKENIHSG']
 CHANNEL_ID = os.environ['TELEGRAM_CHANNEL_IDIHSG']
 LAST_PRICE_FILE = "last_price_ihsg.txt"
-THRESHOLD = 10
+THRESHOLD = 5
 
 def get_ihsg():
     r = requests.get(
